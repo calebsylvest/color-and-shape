@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A generative color and shape study tool in the spirit of Itten, Runge and Albers.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<title>Color &amp; Form Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="9" r="7" fill="#e3412e"/><rect x="10" y="10" width="12" height="12" fill="#2340d0" style="mix-blend-mode:multiply"/><path d="M4 22 L11 10 L18 22Z" fill="#f2c12e" style="mix-blend-mode:multiply"/></svg>
+      Color &amp; Form
+    </div>
+    <div class="gen-group">
+      <button class="btn primary" id="generate" title="Generate a new composition (G)">Generate</button>
+      <div class="shuffle" role="group" aria-label="What Generate changes">
+        <span>Shuffle</span>
+        <label><input type="checkbox" id="shGen"> Type</label>
+        <label><input type="checkbox" id="shParams" checked> Settings</label>
+        <label><input type="checkbox" id="shPal" checked> Palette</label>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <label class="seed" for="seed">Seed <input type="number" id="seed" min="0" step="1"></label>
+    <div class="hgroup">
+      <button class="btn icon" id="undo" title="Undo (⌘Z)" aria-label="Undo"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3 2 6l3 3"/><path d="M2 6h7.5a4 4 0 0 1 0 8H7"/></svg></button>
+      <button class="btn icon" id="redo" title="Redo (⇧⌘Z)" aria-label="Redo"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m11 3 3 3-3 3"/><path d="M14 6H6.5a4 4 0 0 0 0 8H9"/></svg></button>
+    </div>
+    <div class="hgroup">
+      <select id="scale" aria-label="PNG size" title="PNG size">
+        <option value="1">PNG 1×</option>
+        <option value="2" selected>PNG 2×</option>
+        <option value="3">PNG 3×</option>
+        <option value="4">PNG 4×</option>
+      </select>
+      <button class="btn" id="dlPng">Download PNG</button>
+      <button class="btn" id="dlSvg">SVG</button>
+    </div>
+  </header>
+
+  <aside class="panel left" aria-label="Composition and palette">
+    <section class="sec">
+      <h2>Composition</h2>
+      <div class="gen-grid" id="genGrid"></div>
+      <div id="genParams"></div>
+      <p class="note">Changing these rebuilds the composition. Undo brings back your edits.</p>
+      <h3>Canvas</h3>
+      <div class="grid2">
+        <div class="field"><label for="aspect">Aspect</label>
+          <select id="aspect">
+            <option value="1:1">1 : 1</option><option value="4:5">4 : 5</option><option value="5:4">5 : 4</option>
+            <option value="2:3">2 : 3</option><option value="3:2">3 : 2</option><option value="16:9">16 : 9</option><option value="9:16">9 : 16</option>
+          </select></div>
+        <div class="field"><label for="margin">Margin <output id="marginOut"></output></label><input type="range" id="margin" min="0" max="300" step="5"></div>
+      </div>
+      <h3>All shapes</h3>
+      <div class="grid2">
+        <div class="field"><label for="gBlend">Blend</label><select id="gBlend"></select></div>
+        <div class="field"><label for="gOpacity">Opacity <output id="gOpacityOut"></output></label><input type="range" id="gOpacity" min="0.1" max="1" step="0.05"></div>
+        <div class="field"><label for="gOutline">Outline <output id="gOutlineOut"></output></label><input type="range" id="gOutline" min="0" max="8" step="0.25"></div>
+        <div class="field"><span class="lbl">Outline color</span><label class="colorbox"><input type="color" id="gOutlineColor"><span id="gOutlineHex"></span></label></div>
+      </div>
+      <div style="height:8px"></div>
+    </section>
+
+    <section class="sec">
+      <h2>Palette <small id="palName"></small></h2>
+      <div class="presets" id="presets"></div>
+      <div class="field"><span class="lbl">Current colors <output>click a swatch to edit</output></span></div>
+      <div class="swatches" id="swatches"></div>
+      <div class="row" style="margin-bottom:12px">
+        <select id="harmony" aria-label="Harmony rule"></select>
+        <button class="btn" id="randPal" style="flex:none">Random palette</button>
+      </div>
+      <div class="field"><span class="lbl">Background</span>
+        <div class="row">
+          <label class="colorbox"><input type="color" id="bg"><span id="bgHex"></span></label>
+          <button class="btn" id="bgMatch" style="flex:none">Match palette</button>
+        </div>
+      </div>
+    </section>
+  </aside>
+
+  <main class="stage">
+    <div class="tools" id="tools"></div>
+    <div id="canvasWrap">
+      <svg id="svg" xmlns="http://www.w3.org/2000/svg" aria-label="Composition canvas">
+        <g id="art" style="isolation:isolate"></g>
+        <g id="overlay"></g>
+      </svg>
+    </div>
+    <div class="hint">Pick a shape tool and drag on the canvas to place it · Shift-click to select more · <kbd>⌫</kbd> delete · <kbd>⌘D</kbd> duplicate · <kbd>[</kbd> <kbd>]</kbd> reorder · arrows nudge · <kbd>G</kbd> generate</div>
+  </main>
+
+  <aside class="panel right" aria-label="Shape and layers">
+    <section class="sec" id="shapeSec">
+      <h2>Shape</h2>
+      <div id="shapePanel"></div>
+    </section>
+    <section class="sec">
+      <h2>Layers <small id="layerCount"></small></h2>
+      <ul class="layers" id="layers" role="listbox" aria-label="Layers, top first" aria-multiselectable="true"></ul>
+    </section>
+  </aside>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

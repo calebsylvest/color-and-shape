@@ -1,0 +1,10 @@
+{
+  "name": "color-and-shape",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generative color and shape studies in the spirit of Itten, Runge and Albers.",
+  "scripts": {
+    "dev": "npx --yes serve@14.2.4 . -l 5173",
+    "start": "npx --yes serve@14.2.4 . -l 5173"
+  }
+}
